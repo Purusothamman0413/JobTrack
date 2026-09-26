@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f4f7fb">
+  <title>Sign in · JobTrack</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="auth-page">
+  <main class="auth-shell">
+    <a class="brand auth-brand" href="/login.html" aria-label="JobTrack home"><span class="brand-mark">J</span><span>JobTrack</span></a>
+    <section class="auth-card">
+      <div class="eyebrow">WELCOME BACK</div>
+      <h1>Sign in to your account</h1>
+      <p class="muted">Keep your job search organized and moving forward.</p>
+      <div id="auth-message" class="notice" role="alert" aria-live="polite" hidden></div>
+      <form id="login-form" class="form-stack" novalidate>
+        <label>Email address<input name="email" type="email" autocomplete="email" placeholder="you@example.com" required maxlength="254"></label>
+        <label>Password<input name="password" type="password" autocomplete="current-password" placeholder="Your password" required></label>
+        <button class="button button-primary button-wide" type="submit">Sign in <span aria-hidden="true">→</span></button>
+      </form>
+      <p class="auth-switch">New to JobTrack? <a href="/register.html">Create an account</a></p>
+    </section>
+    <p class="auth-foot">A clearer view of your next opportunity.</p>
+  </main>
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+</body>
+</html>

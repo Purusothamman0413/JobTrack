@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f4f7fb">
+  <title>Create account · JobTrack</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="auth-page">
+  <main class="auth-shell">
+    <a class="brand auth-brand" href="/register.html" aria-label="JobTrack home"><span class="brand-mark">J</span><span>JobTrack</span></a>
+    <section class="auth-card">
+      <div class="eyebrow">GET STARTED</div>
+      <h1>Create your account</h1>
+      <p class="muted">One place for every application and next step.</p>
+      <div id="auth-message" class="notice" role="alert" aria-live="polite" hidden></div>
+      <form id="register-form" class="form-stack" novalidate>
+        <label>Full name<input name="fullName" type="text" autocomplete="name" placeholder="Alex Morgan" required minlength="2" maxlength="120"></label>
+        <label>Email address<input name="email" type="email" autocomplete="email" placeholder="you@example.com" required maxlength="254"></label>
+        <label>Password<input name="password" type="password" autocomplete="new-password" placeholder="At least 8 characters" required minlength="8" maxlength="128"></label>
+        <label>Confirm password<input name="confirmPassword" type="password" autocomplete="new-password" placeholder="Enter your password again" required></label>
+        <button class="button button-primary button-wide" type="submit">Create account <span aria-hidden="true">→</span></button>
+      </form>
+      <p class="auth-switch">Already have an account? <a href="/login.html">Sign in</a></p>
+    </section>
+    <p class="auth-foot">A clearer view of your next opportunity.</p>
+  </main>
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+</body>
+</html>

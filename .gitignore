@@ -1,0 +1,46 @@
+# Build output
+bin/
+obj/
+[Bb]uild/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+artifacts/
+
+# Visual Studio and IDE state
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.rsuser
+.idea/
+.vscode/
+
+# Local databases and SQLite sidecar files
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+# Local environment and secret files
+.env
+.env.*
+!.env.example
+secrets.json
+secrets.*.json
+appsettings.*.local.json
+*.pfx
+*.p12
+
+# NuGet and test output
+*.nupkg
+*.snupkg
+TestResults/
+coverage/
+
+# OS metadata
+.DS_Store
+Thumbs.db
