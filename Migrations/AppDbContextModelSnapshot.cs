@@ -83,7 +83,7 @@ namespace JobTrack.API.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("JobApplications");
+                    b.ToTable("JobApplications", (string)null);
                 });
 
             modelBuilder.Entity("JobTrack.API.Models.User", b =>
@@ -114,7 +114,7 @@ namespace JobTrack.API.Migrations
                     b.HasIndex("Email")
                         .IsUnique();
 
-                    b.ToTable("Users");
+                    b.ToTable("Users", (string)null);
                 });
 
             modelBuilder.Entity("JobTrack.API.Models.JobApplication", b =>
