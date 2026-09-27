@@ -42,6 +42,10 @@ builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 
 var jwtKey = builder.Configuration["Jwt:Key"]
     ?? throw new InvalidOperationException("JWT signing key was not configured.");
+if (Encoding.UTF8.GetByteCount(jwtKey) < 32)
+{
+    throw new InvalidOperationException("JWT signing key must be at least 32 bytes.");
+}
 var jwtIssuer = builder.Configuration["Jwt:Issuer"]
     ?? throw new InvalidOperationException("JWT issuer was not configured.");
 var jwtAudience = builder.Configuration["Jwt:Audience"]
@@ -70,6 +74,15 @@ builder.Services.AddCors(options => options.AddPolicy("LocalFrontend", policy =>
     }).AllowAnyHeader().AllowAnyMethod()));
 
 var app = builder.Build();
+
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler(handler => handler.Run(async context =>
+    {
+        context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+        await context.Response.WriteAsJsonAsync(new { message = "An unexpected error occurred." });
+    }));
+}
 
 await using (var scope = app.Services.CreateAsyncScope())
 {

@@ -17,10 +17,14 @@
 
     if (!response.ok) {
       let message = "Something went wrong. Please try again.";
-      try {
-        const problem = await response.json();
-        message = problem.message || problem.title || (problem.errors && Object.values(problem.errors).flat().join(" ")) || message;
-      } catch { /* Use the friendly fallback when the response has no JSON body. */ }
+      if (response.status === 400) message = "Please check the information and try again.";
+      else if (response.status === 404) message = "This application could not be found. Refresh the list and try again.";
+      else if (response.status < 500) {
+        try {
+          const problem = await response.json();
+          message = problem.message || problem.title || message;
+        } catch { /* Keep the friendly fallback when no safe message is available. */ }
+      }
       throw new Error(message);
     }
     if (response.status === 204) return null;

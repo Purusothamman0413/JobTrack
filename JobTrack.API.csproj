@@ -26,4 +26,10 @@
     <ContainerPort Include="8081" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Remove="JobTrack/**/*.cs" />
+    <Content Remove="JobTrack/**" />
+    <None Remove="JobTrack/**" />
+  </ItemGroup>
+
 </Project>

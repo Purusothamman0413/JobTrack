@@ -20,14 +20,36 @@
       <button class="button button-primary" id="add-application-button" type="button"><span class="plus" aria-hidden="true">+</span> Add Application</button>
     </section>
 
-    <div id="dashboard-message" class="notice" role="status" aria-live="polite" hidden></div>
+    <section class="stats-grid" aria-label="Application statistics" aria-busy="true" id="stats-grid">
+      <article class="stat-card stat-total"><div class="stat-label">Total applications</div><div class="stat-bottom"><strong id="stat-total">Loading…</strong><span class="stat-icon icon-blue" aria-hidden="true">▤</span></div><div class="stat-context">Across your job search</div></article>
+      <article class="stat-card"><div class="stat-label">Applied</div><div class="stat-bottom"><strong id="stat-applied">Loading…</strong><span class="stat-icon icon-slate" aria-hidden="true">↗</span></div><div class="stat-context">Applications sent</div></article>
+      <article class="stat-card"><div class="stat-label">Interview</div><div class="stat-bottom"><strong id="stat-interview">Loading…</strong><span class="stat-icon icon-violet" aria-hidden="true">◷</span></div><div class="stat-context">In interview stage</div></article>
+      <article class="stat-card"><div class="stat-label">Selected</div><div class="stat-bottom"><strong id="stat-selected">Loading…</strong><span class="stat-icon icon-green" aria-hidden="true">✓</span></div><div class="stat-context">Offers received</div></article>
+      <article class="stat-card"><div class="stat-label">Rejected</div><div class="stat-bottom"><strong id="stat-rejected">Loading…</strong><span class="stat-icon icon-rose" aria-hidden="true">−</span></div><div class="stat-context">Closed applications</div></article>
+      <article class="stat-card stat-rate"><div class="stat-label">Interview rate</div><div class="stat-bottom"><strong id="stat-interview-rate">Loading…</strong></div><div class="stat-context">Of all applications</div></article>
+      <article class="stat-card stat-rate"><div class="stat-label">Selection rate</div><div class="stat-bottom"><strong id="stat-selection-rate">Loading…</strong></div><div class="stat-context">Of all applications</div></article>
+      <article class="stat-card stat-month"><div class="stat-label">This month</div><div class="stat-bottom"><strong id="stat-this-month">Loading…</strong></div><div class="stat-context">Applied this month</div></article>
+    </section>
+    <div id="stats-loading" class="stats-loading" role="status" aria-live="polite">Loading dashboard statistics…</div>
+    <div id="stats-error" class="notice notice-error stats-error" role="alert" hidden>Unable to load dashboard statistics.</div>
 
-    <section class="stats-grid" aria-label="Application statistics">
-      <article class="stat-card"><div class="stat-label">Total applications</div><div class="stat-bottom"><strong id="stat-total">—</strong><span class="stat-icon icon-blue">▤</span></div></article>
-      <article class="stat-card"><div class="stat-label">Applied</div><div class="stat-bottom"><strong id="stat-applied">—</strong><span class="stat-icon icon-slate">↗</span></div></article>
-      <article class="stat-card"><div class="stat-label">Interview</div><div class="stat-bottom"><strong id="stat-interview">—</strong><span class="stat-icon icon-violet">◷</span></div></article>
-      <article class="stat-card"><div class="stat-label">Selected</div><div class="stat-bottom"><strong id="stat-selected">—</strong><span class="stat-icon icon-green">✓</span></div></article>
-      <article class="stat-card"><div class="stat-label">Rejected</div><div class="stat-bottom"><strong id="stat-rejected">—</strong><span class="stat-icon icon-rose">−</span></div></article>
+    <section class="dashboard-overview" aria-label="Dashboard overview">
+      <article class="panel overview-panel">
+        <div class="panel-heading"><div><h2>Application status</h2><p class="muted">How your applications are progressing.</p></div></div>
+        <div id="status-empty" class="overview-empty" hidden>No applications to summarize yet.</div>
+        <div id="status-distribution" class="status-distribution" hidden>
+          <div class="distribution-row"><div class="distribution-label"><span>Applied</span><strong id="status-count-applied">0</strong></div><div class="distribution-track" role="progressbar" aria-label="Applied applications" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="status-bar-applied" class="distribution-fill fill-applied"></span></div><span id="status-pct-applied" class="distribution-percent">0%</span></div>
+          <div class="distribution-row"><div class="distribution-label"><span>Interview</span><strong id="status-count-interview">0</strong></div><div class="distribution-track" role="progressbar" aria-label="Interview applications" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="status-bar-interview" class="distribution-fill fill-interview"></span></div><span id="status-pct-interview" class="distribution-percent">0%</span></div>
+          <div class="distribution-row"><div class="distribution-label"><span>Selected</span><strong id="status-count-selected">0</strong></div><div class="distribution-track" role="progressbar" aria-label="Selected applications" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="status-bar-selected" class="distribution-fill fill-selected"></span></div><span id="status-pct-selected" class="distribution-percent">0%</span></div>
+          <div class="distribution-row"><div class="distribution-label"><span>Rejected</span><strong id="status-count-rejected">0</strong></div><div class="distribution-track" role="progressbar" aria-label="Rejected applications" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="status-bar-rejected" class="distribution-fill fill-rejected"></span></div><span id="status-pct-rejected" class="distribution-percent">0%</span></div>
+        </div>
+      </article>
+      <article class="panel overview-panel recent-panel">
+        <div class="panel-heading"><div><h2>Recent applications</h2><p class="muted">Your latest opportunities.</p></div><button class="text-button" id="recent-add-button" type="button">+ Add Application</button></div>
+        <div id="recent-applications" class="recent-list" aria-live="polite"></div>
+        <div id="recent-loading" class="overview-empty" role="status">Loading recent applications…</div>
+        <div id="recent-empty" class="overview-empty" hidden>No applications yet.</div>
+      </article>
     </section>
 
     <section class="panel applications-panel">
@@ -35,31 +57,32 @@
       <div class="filters">
         <label class="search-field"><span aria-hidden="true">⌕</span><input id="search-input" type="search" placeholder="Search company or role" aria-label="Search company or job title"></label>
         <label class="select-field"><select id="status-filter" aria-label="Filter by status"><option value="">All statuses</option><option>Applied</option><option>Interview</option><option>Selected</option><option>Rejected</option></select></label>
+        <label class="select-field"><select id="sort-order" aria-label="Sort applications"><option value="newest">Newest applied</option><option value="oldest">Oldest applied</option><option value="company">Company A–Z</option><option value="priority">Priority</option></select></label>
       </div>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>Company</th><th>Job title</th><th>Location</th><th>Applied</th><th>Status</th><th>Job link</th><th><span class="sr-only">Actions</span></th></tr></thead>
-          <tbody id="applications-body"></tbody>
-        </table>
-      </div>
-      <div id="empty-state" class="empty-state" hidden><span class="empty-icon">▤</span><h3>No applications found</h3><p class="muted">Add your first application or adjust your search filters.</p><button class="button button-secondary" id="empty-add-button" type="button">Add an application</button></div>
+      <div id="applications-body" class="application-list" aria-live="polite"></div>
+      <div id="empty-state" class="empty-state" hidden><span class="empty-icon">▤</span><h3 id="empty-title">No job applications yet</h3><p id="empty-description" class="muted">Add your first application to keep your job search organized.</p><button class="button button-secondary" id="empty-add-button" type="button">Add your first application</button></div>
       <div id="loading-state" class="loading-state">Loading your applications…</div>
     </section>
     <footer class="dashboard-footer"><span>JobTrack</span><span>Make every application count.</span></footer>
   </main>
 
-  <dialog id="application-dialog" class="application-dialog">
+  <dialog id="application-dialog" class="application-dialog" aria-labelledby="dialog-title">
     <form id="application-form" class="dialog-card" novalidate>
       <div class="dialog-heading"><div><div class="eyebrow" id="dialog-eyebrow">NEW OPPORTUNITY</div><h2 id="dialog-title">Add application</h2></div><button class="icon-button" id="close-dialog" type="button" aria-label="Close">×</button></div>
       <div id="form-message" class="notice" role="alert" aria-live="polite" hidden></div>
       <input name="id" type="hidden">
       <div class="form-grid">
-        <label>Company name<input name="companyName" required maxlength="160" placeholder="Company name"></label>
-        <label>Job title<input name="jobTitle" required maxlength="160" placeholder="Role title"></label>
-        <label>Location<input name="location" required maxlength="160" placeholder="City, remote, etc."></label>
+        <label>Company name <span class="required-mark">Required</span><input name="companyName" required maxlength="160" autocomplete="organization" placeholder="Company name"></label>
+        <label>Job title <span class="required-mark">Required</span><input name="jobTitle" required maxlength="160" placeholder="Role title"></label>
+        <label>Location <span class="required-mark">Required</span><input name="location" required maxlength="160" placeholder="City, remote, etc."></label>
         <label>Job URL <span class="optional">Optional</span><input name="jobUrl" type="url" maxlength="2048" placeholder="https://example.com/job"></label>
-        <label>Applied date<input name="appliedDate" type="date" required></label>
-        <label>Status<select name="status" required><option>Applied</option><option>Interview</option><option>Selected</option><option>Rejected</option></select></label>
+        <label>Applied date <span class="required-mark">Required</span><input name="appliedDate" type="date" required></label>
+        <label>Status <span class="required-mark">Required</span><select name="status" required><option value="Applied">Applied</option><option value="Interview">Interview</option><option value="Selected">Selected</option><option value="Rejected">Rejected</option></select></label>
+        <label>Job type <span class="optional">Optional</span><select name="jobType"><option value="">Not specified</option><option>Full-time</option><option>Part-time</option><option>Internship</option><option>Contract</option><option>Freelance</option></select></label>
+        <label>Work mode <span class="optional">Optional</span><select name="workMode"><option value="">Not specified</option><option>Remote</option><option>Hybrid</option><option>On-site</option></select></label>
+        <label>Salary / CTC <span class="optional">Optional</span><input name="salary" type="number" min="0" max="9999999999999999.99" step="0.01" inputmode="decimal" placeholder="e.g. 800000"></label>
+        <label>Application source <span class="optional">Optional</span><select name="applicationSource"><option value="">Not specified</option><option>LinkedIn</option><option>Naukri</option><option>Company Website</option><option>Indeed</option><option>Referral</option><option>Other</option></select></label>
+        <label>Priority <span class="optional">Optional</span><select name="priority"><option value="">Not specified</option><option>Low</option><option>Medium</option><option>High</option></select></label>
         <label class="full-width">Notes <span class="optional">Optional</span><textarea name="notes" rows="3" maxlength="4000" placeholder="Add a reminder or useful detail…"></textarea></label>
       </div>
       <div class="dialog-actions"><button class="button button-secondary" id="cancel-dialog" type="button">Cancel</button><button class="button button-primary" id="save-application" type="submit">Save application</button></div>
@@ -67,5 +90,6 @@
   </dialog>
   <script src="/js/api.js"></script>
   <script src="/js/dashboard.js"></script>
+  <div id="toast-region" class="toast-region" role="status" aria-live="polite" aria-atomic="true"></div>
 </body>
 </html>

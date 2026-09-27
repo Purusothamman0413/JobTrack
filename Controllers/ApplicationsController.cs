@@ -16,7 +16,9 @@ public sealed class ApplicationsController(AppDbContext dbContext) : ControllerB
     private static readonly string[] AllowedStatuses = ["Applied", "Interview", "Selected", "Rejected"];
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<JobApplication>>> GetAll(
+    [ProducesResponseType(typeof(IEnumerable<JobApplicationResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<IEnumerable<JobApplicationResponse>>> GetAll(
         [FromQuery] string? search, [FromQuery] string? status, CancellationToken cancellationToken)
     {
         if (!TryGetUserId(out var userId)) return Unauthorized();
@@ -32,42 +34,68 @@ public sealed class ApplicationsController(AppDbContext dbContext) : ControllerB
             query = query.Where(application => application.Status == status.Trim());
         }
 
-        return Ok(await query.OrderByDescending(application => application.AppliedDate).ToListAsync(cancellationToken));
+        var applications = await query.OrderByDescending(application => application.AppliedDate)
+            .ToListAsync(cancellationToken);
+        return Ok(applications.Select(ToResponse));
     }
 
     [HttpGet("stats")]
-    public async Task<IActionResult> GetStats(CancellationToken cancellationToken)
+    [ProducesResponseType(typeof(ApplicationStatsResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<ApplicationStatsResponse>> GetStats(CancellationToken cancellationToken)
     {
         if (!TryGetUserId(out var userId)) return Unauthorized();
-        var counts = await dbContext.JobApplications.AsNoTracking()
-            .Where(application => application.UserId == userId)
+        var userApplications = dbContext.JobApplications.AsNoTracking()
+            .Where(application => application.UserId == userId);
+        var counts = await userApplications
             .GroupBy(application => application.Status)
             .Select(group => new { Status = group.Key, Count = group.Count() })
             .ToDictionaryAsync(item => item.Status, item => item.Count, cancellationToken);
-        return Ok(new
+
+        var total = counts.Values.Sum();
+        var interviewCount = GetCount(counts, "Interview");
+        var selectedCount = GetCount(counts, "Selected");
+        var now = DateTime.UtcNow;
+        var monthStart = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+        var nextMonthStart = monthStart.AddMonths(1);
+        var thisMonth = await userApplications.CountAsync(
+            application => application.AppliedDate >= monthStart && application.AppliedDate < nextMonthStart,
+            cancellationToken);
+
+        return Ok(new ApplicationStatsResponse
         {
-            total = counts.Values.Sum(),
-            applied = GetCount(counts, "Applied"),
-            interview = GetCount(counts, "Interview"),
-            selected = GetCount(counts, "Selected"),
-            rejected = GetCount(counts, "Rejected")
+            Total = total,
+            Applied = GetCount(counts, "Applied"),
+            Interview = interviewCount,
+            Selected = selectedCount,
+            Rejected = GetCount(counts, "Rejected"),
+            InterviewRate = total == 0 ? 0 : (double)interviewCount / total * 100,
+            SelectionRate = total == 0 ? 0 : (double)selectedCount / total * 100,
+            ThisMonth = thisMonth
         });
     }
 
     [HttpGet("{id:int}")]
-    public async Task<ActionResult<JobApplication>> GetById(int id, CancellationToken cancellationToken)
+    [ProducesResponseType(typeof(JobApplicationResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<JobApplicationResponse>> GetById(int id, CancellationToken cancellationToken)
     {
         if (!TryGetUserId(out var userId)) return Unauthorized();
         var application = await dbContext.JobApplications.AsNoTracking()
             .SingleOrDefaultAsync(item => item.Id == id && item.UserId == userId, cancellationToken);
-        return application is null ? NotFound() : Ok(application);
+        return application is null ? NotFound() : Ok(ToResponse(application));
     }
 
     [HttpPost]
-    public async Task<ActionResult<JobApplication>> Create(CreateApplicationRequest request, CancellationToken cancellationToken)
+    [ProducesResponseType(typeof(JobApplicationResponse), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<JobApplicationResponse>> Create(CreateApplicationRequest request, CancellationToken cancellationToken)
     {
         if (!TryGetUserId(out var userId)) return Unauthorized();
-        if (!IsAllowedStatus(request.Status)) return BadRequest(new { message = "Status is invalid." });
+        var validationResult = ValidateApplicationRequest(request);
+        if (validationResult is not null) return validationResult;
         var application = new JobApplication
         {
             UserId = userId,
@@ -78,19 +106,29 @@ public sealed class ApplicationsController(AppDbContext dbContext) : ControllerB
             AppliedDate = request.AppliedDate,
             Status = request.Status,
             Notes = request.Notes,
+            JobType = request.JobType,
+            WorkMode = request.WorkMode,
+            Salary = request.Salary,
+            ApplicationSource = request.ApplicationSource,
+            Priority = request.Priority,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
         dbContext.JobApplications.Add(application);
         await dbContext.SaveChangesAsync(cancellationToken);
-        return CreatedAtAction(nameof(GetById), new { id = application.Id }, application);
+        return CreatedAtAction(nameof(GetById), new { id = application.Id }, ToResponse(application));
     }
 
     [HttpPut("{id:int}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Update(int id, UpdateApplicationRequest request, CancellationToken cancellationToken)
     {
         if (!TryGetUserId(out var userId)) return Unauthorized();
-        if (!IsAllowedStatus(request.Status)) return BadRequest(new { message = "Status is invalid." });
+        var validationResult = ValidateApplicationRequest(request);
+        if (validationResult is not null) return validationResult;
         var application = await dbContext.JobApplications
             .SingleOrDefaultAsync(item => item.Id == id && item.UserId == userId, cancellationToken);
         if (application is null) return NotFound();
@@ -102,12 +140,20 @@ public sealed class ApplicationsController(AppDbContext dbContext) : ControllerB
         application.AppliedDate = request.AppliedDate;
         application.Status = request.Status;
         application.Notes = request.Notes;
+        application.JobType = request.JobType;
+        application.WorkMode = request.WorkMode;
+        application.Salary = request.Salary;
+        application.ApplicationSource = request.ApplicationSource;
+        application.Priority = request.Priority;
         application.UpdatedAt = DateTime.UtcNow;
         await dbContext.SaveChangesAsync(cancellationToken);
         return NoContent();
     }
 
     [HttpDelete("{id:int}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
     {
         if (!TryGetUserId(out var userId)) return Unauthorized();
@@ -121,6 +167,39 @@ public sealed class ApplicationsController(AppDbContext dbContext) : ControllerB
 
     private bool TryGetUserId(out int userId) =>
         int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out userId);
+
+    private BadRequestObjectResult? ValidateApplicationRequest(CreateApplicationRequest request)
+    {
+        if (request.AppliedDate == default)
+            return BadRequest(new { message = "Applied date is required." });
+
+        if (!IsAllowedStatus(request.Status))
+            return BadRequest(new { message = "Status is invalid." });
+
+        if (request.Salary is decimal salary && decimal.Round(salary, 2) != salary)
+            return BadRequest(new { message = "Salary can have no more than two decimal places." });
+
+        return null;
+    }
+
+    private static JobApplicationResponse ToResponse(JobApplication application) => new()
+    {
+        Id = application.Id,
+        CompanyName = application.CompanyName,
+        JobTitle = application.JobTitle,
+        Location = application.Location,
+        JobUrl = application.JobUrl,
+        AppliedDate = application.AppliedDate,
+        Status = application.Status,
+        Notes = application.Notes,
+        JobType = application.JobType,
+        WorkMode = application.WorkMode,
+        Salary = application.Salary,
+        ApplicationSource = application.ApplicationSource,
+        Priority = application.Priority,
+        CreatedAt = application.CreatedAt,
+        UpdatedAt = application.UpdatedAt
+    };
 
     private static bool IsAllowedStatus(string status) => AllowedStatuses.Contains(status);
     private static int GetCount(IReadOnlyDictionary<string, int> counts, string key) =>

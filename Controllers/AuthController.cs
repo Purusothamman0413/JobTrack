@@ -9,22 +9,28 @@ namespace JobTrack.API.Controllers;
 public sealed class AuthController(IAuthService authService) : ControllerBase
 {
     [HttpPost("register")]
-    public async Task<IActionResult> Register(RegisterRequest request, CancellationToken cancellationToken)
+    [ProducesResponseType(typeof(AuthMessageResponse), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(AuthMessageResponse), StatusCodes.Status409Conflict)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<AuthMessageResponse>> Register(RegisterRequest request, CancellationToken cancellationToken)
     {
         if (!await authService.RegisterAsync(request, cancellationToken))
         {
-            return Conflict(new { message = "An account with this email already exists." });
+            return Conflict(new AuthMessageResponse("An account with this email already exists."));
         }
 
-        return StatusCode(StatusCodes.Status201Created, new { message = "Registration successful." });
+        return StatusCode(StatusCodes.Status201Created, new AuthMessageResponse("Registration successful."));
     }
 
     [HttpPost("login")]
-    public async Task<IActionResult> Login(LoginRequest request, CancellationToken cancellationToken)
+    [ProducesResponseType(typeof(LoginResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(AuthMessageResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<LoginResponse>> Login(LoginRequest request, CancellationToken cancellationToken)
     {
         var token = await authService.LoginAsync(request, cancellationToken);
         return token is null
-            ? Unauthorized(new { message = "Invalid email or password." })
-            : Ok(new { token });
+            ? Unauthorized(new AuthMessageResponse("Invalid email or password."))
+            : Ok(new LoginResponse(token));
     }
 }

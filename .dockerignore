@@ -10,5 +10,13 @@ obj/
 *.sqlite3
 *.user
 *.suo
+*.pfx
+*.p12
+.env
+.env.*
+secrets.json
+secrets.*.json
+appsettings.*.json
 **/bin/
 **/obj/
+/JobTrack/

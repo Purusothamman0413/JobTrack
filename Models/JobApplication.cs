@@ -27,6 +27,12 @@ public sealed class JobApplication
     [MaxLength(4000)]
     public string? Notes { get; set; }
 
+    public string? JobType { get; set; }
+    public string? WorkMode { get; set; }
+    public decimal? Salary { get; set; }
+    public string? ApplicationSource { get; set; }
+    public string? Priority { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 

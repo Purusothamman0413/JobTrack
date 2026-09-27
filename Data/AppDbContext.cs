@@ -26,6 +26,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
             entity.Property(application => application.JobTitle).IsRequired();
             entity.Property(application => application.Location).IsRequired();
             entity.Property(application => application.Status).IsRequired();
+            entity.Property(application => application.Salary).HasPrecision(18, 2);
             entity.HasOne(application => application.User)
                 .WithMany(user => user.JobApplications)
                 .HasForeignKey(application => application.UserId)
